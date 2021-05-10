@@ -13,7 +13,8 @@ class DQNAgent:
     def __init__(
         self, input_shape: tuple, action_size: int, seed: int, device: str,
         buffer_size: int, batch_size: int, gamma: float, lr: float, tau: float,
-        update_every: int, replay_after: int, model: nn.Module, **kwargs
+        update_every: int, replay_after: int, model: nn.Module,
+        loss: str, **kwargs
     ):
         """Initialize an Agent object.
 
@@ -54,6 +55,9 @@ class DQNAgent:
                                    self.device)
 
         self.t_step = 0
+
+        self.loss = loss
+        self.criterion = nn.SmoothL1Loss() if loss == 'Huber' else nn.MSELoss()
 
     def step(self, state, action, reward, next_state, done):
         # Save experience in replay memory
@@ -100,7 +104,7 @@ class DQNAgent:
         q_targets = rewards + (self.gamma * q_targets_next * (1 - dones))
 
         # Compute loss
-        loss = F.mse_loss(q_expected, q_targets)
+        loss = self.criterion(q_expected, q_targets)
 
         # Minimize the loss
         self.optimizer.zero_grad()
