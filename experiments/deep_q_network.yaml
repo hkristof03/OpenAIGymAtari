@@ -1,0 +1,30 @@
+
+env:
+  id: Assault-v0
+
+preprocess:
+  exclude: !!python/tuple [49, 225, 0, 160]
+
+input_shape: !!python/tuple [4, 176, 160]
+action_size:
+seed: 0
+device:
+gamma: 0.99           # discount factor
+buffer_size: 100000   # replay buffer size
+batch_size: 64        # Update batch size
+lr: 0.0001            # learning rate
+tau: 1e-3             # for soft update of target parameters
+update_every: 1       # how often to update the network
+replay_after: 10000   # After which threshold replay to be started
+eps_start: 0.99       # starting value of epsilon
+eps_end: 0.01         # Ending value of epsilon
+eps_decay: 100        # Rate by which epsilon to be decayed
+model:
+
+n_episodes: 5
+
+model_to_use: !!python/tuple [dqn_cnn, DQNCnn]
+
+tags:
+  - assault_v0
+  - dqn
