@@ -9,7 +9,7 @@ from collections import deque
 from models import dqn_cnn
 from dqn_agent import DQNAgent
 from preprocessing import preprocess_frame, stack_frame
-from utils import read_yaml, parse_args, save_scores
+from utils import read_yaml, parse_args, save_scores, save_model
 
 
 def stack_frames(
@@ -66,7 +66,7 @@ def train(conf: dict) -> dict:
         eps = decay_epsilon(conf, i_episode)
 
         while True:
-            env.render()
+            # env.render()
             action = agent.act(state, eps)
             next_state, reward, done, info = env.step(action)
             score += reward
@@ -80,9 +80,13 @@ def train(conf: dict) -> dict:
         scores_window.append(score)  # save most recent score
         scores.append(score)  # save most recent score
 
-        print(f'Episode {i_episode}\tAverage Score: {np.mean(scores_window)}')
+        print(
+            f'Episode {i_episode}\tAverage Score: {np.mean(scores_window)}'
+            f'\tEpsilon: {eps}'
+        )
 
     env.close()
+    save_model(conf, agent)
 
     return {
         'scores': scores,

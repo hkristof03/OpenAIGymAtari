@@ -2,7 +2,10 @@ import os
 import yaml
 import argparse
 
+import torch
 import pandas as pd
+
+from dqn_agent import DQNAgent
 
 
 def parse_args():
@@ -37,3 +40,14 @@ def save_scores(conf: dict, stats: dict) -> None:
         '_'.join(conf['tags']) + '.csv'
     )
     df_stats.to_csv(path_save, index=False)
+
+
+def save_model(conf: dict, agent: DQNAgent) -> None:
+
+    path_save_model = os.path.join(
+        os.path.dirname(__file__),
+        'artifacts',
+        'saved_models',
+        '_'.join(conf['tags'] + [conf['model_to_use'][1]]) + '.pth'
+    )
+    torch.save(agent.policy_net.state_dict(), path_save_model)
