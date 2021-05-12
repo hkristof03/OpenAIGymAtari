@@ -18,15 +18,17 @@ update_every: 1       # how often to update the network
 replay_after: 10000   # After which threshold replay to be started
 eps_start: 0.99       # starting value of epsilon
 eps_end: 0.01         # Ending value of epsilon
-eps_decay: 100        # Rate by which epsilon to be decayed
+eps_decay: 400        # Rate by which epsilon to be decayed
 model:
 loss: Huber
 
-n_episodes: 1000
-
-model_to_use: !!python/tuple [dqn_cnn, DQNCnn]
+n_episodes: 3000
+model_to_use: !!python/tuple [dqn_cnn, DQNCnnBatchNorm]
+save_every: 500
 
 tags:
   - assault_v0
   - dqn
-  - mse
+  - BN
+  - Huber
+  - avg_Q_value

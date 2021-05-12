@@ -2,27 +2,38 @@ import math
 from typing import Union
 
 import gym
+from gym.wrappers.time_limit import TimeLimit
 import torch
 import numpy as np
 from collections import deque
 
 from models import dqn_cnn
 from dqn_agent import DQNAgent
-from preprocessing import preprocess_frame, stack_frame
+from preprocessing import preprocess_frame, stack_frames
 from utils import read_yaml, parse_args, save_scores, save_model
 
 
-def stack_frames(
-    frames: Union[np.ndarray, None],
-    state: np.ndarray,
-    exclude: tuple,
-    is_new: bool = False
-):
+def collect_fixed_set_of_states(conf: dict, env: TimeLimit) -> list:
+    # Collect samples to evaluate the agent on a fixed set of samples
+    # (DQN paper). Collect a fixed set of states by running a random policy
+    # before training starts and track the average of the maximum predicted
+    # Q for these states.
+    env.reset()
+    exclude = conf['preprocess']['exclude']
+    fixed_states = []
 
-    frame = preprocess_frame(state, exclude)
-    frames = stack_frame(frames, frame, is_new)
+    while True:
+        action = env.action_space.sample()
+        next_state, reward, done, _ = env.step(action)
+        state = next_state
+        preprocessed_state = preprocess_frame(state, exclude)
+        fixed_states.append(preprocessed_state)
+        if done:
+            break
+    env.close()
+    print(f'Collected {len(fixed_states)} fixed set of states!')
 
-    return frames
+    return fixed_states
 
 
 def decay_epsilon(conf: dict, current_episode: int) -> float:
@@ -55,6 +66,10 @@ def train(conf: dict) -> dict:
     epsilons = []
     scores_window = deque(maxlen=20)
     eps = conf['eps_start']
+    # Evaluate the agent based on the mean of the Q values on the fixed set
+    # of states
+    fixed_states = collect_fixed_set_of_states(conf, env)
+    average_action_values = []
 
     agent = DQNAgent(**exp_conf)
 
@@ -79,18 +94,25 @@ def train(conf: dict) -> dict:
 
         scores_window.append(score)  # save most recent score
         scores.append(score)  # save most recent score
+        avg_av = agent.evaluate_on_fixed_set(fixed_states)
+        average_action_values.append(avg_av)
 
         print(
-            f'Episode {i_episode}\tAverage Score: {np.mean(scores_window)}'
-            f'\tEpsilon: {eps}'
+            f'Episode {i_episode}\tAverage Score: '
+            f'{round(np.mean(scores_window),4)}\tEpsilon: {round(eps, 4)}\t'
+            f'Average Q value: {round(avg_av, 4)}'
         )
 
+        if i_episode % conf['save_every'] == 0 and i_episode > 0:
+            print(f'Saving model at iteration: {i_episode}')
+            save_model(conf, agent)
+
     env.close()
-    save_model(conf, agent)
 
     return {
         'scores': scores,
-        'epsilons': epsilons
+        'epsilons': epsilons,
+        'avg_action_values': average_action_values
     }
 
 
@@ -103,5 +125,4 @@ if __name__ == '__main__':
     stats = train(exp_conf)
     save_scores(exp_conf, stats)
 
-    print(stats)
 

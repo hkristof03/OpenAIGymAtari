@@ -54,3 +54,16 @@ def stack_frame(stacked_frames, frame, is_new):
         stacked_frames[3] = frame
 
     return stacked_frames
+
+
+def stack_frames(
+    frames: Union[np.ndarray, None],
+    state: np.ndarray,
+    exclude: tuple,
+    is_new: bool = False
+) -> np.ndarray:
+
+    frame = preprocess_frame(state, exclude)
+    frames = stack_frame(frames, frame, is_new)
+
+    return frames

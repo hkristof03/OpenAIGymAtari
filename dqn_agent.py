@@ -7,6 +7,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 from replay_buffer import ReplayBuffer
+from preprocessing import stack_frame
 
 
 class DQNAgent:
@@ -119,3 +120,33 @@ class DQNAgent:
                                               policy_model.parameters()):
             target_param.data.copy_(
                 tau * policy_param.data + (1.0 - tau) * target_param.data)
+
+    def evaluate_on_fixed_set(
+        self,
+        fixed_states: list
+    ) -> float:
+        """
+
+        :param fixed_states: preprocessed fixed set of states
+        :return:
+        """
+        action_values = []
+
+        self.policy_net.eval()
+        with torch.no_grad():
+
+            state = stack_frame(None, fixed_states[0], True)
+
+            for frame in fixed_states[1:]:
+                state_tensor = torch.from_numpy(state).unsqueeze(0).to(
+                    self.device)
+                max_action_value = np.max(
+                    self.policy_net(state_tensor).cpu().data.numpy()
+                )
+                next_state = stack_frame(state, frame, False)
+                state = next_state
+                action_values.append(max_action_value)
+
+        self.policy_net.train()
+
+        return np.mean(action_values)
