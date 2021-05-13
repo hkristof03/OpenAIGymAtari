@@ -3,9 +3,9 @@ env:
   id: Assault-v0
 
 preprocess:
-  exclude: !!python/tuple [49, 225, 0, 160]
+  exclude: !!python/tuple [49, 224, 0, 160]
 
-input_shape: !!python/tuple [4, 176, 160]
+input_shape: !!python/tuple [4, 175, 160]
 action_size:
 seed: 0
 device:
@@ -18,17 +18,16 @@ update_every: 1       # how often to update the network
 replay_after: 10000   # After which threshold replay to be started
 eps_start: 0.99       # starting value of epsilon
 eps_end: 0.01         # Ending value of epsilon
-eps_decay: 400        # Rate by which epsilon to be decayed
+eps_decay: 100        # Rate by which epsilon to be decayed
 model:
-loss: Huber
+loss: mse
 
-n_episodes: 3000
+n_episodes: 2000
 model_to_use: !!python/tuple [dqn_cnn, DQNCnnBatchNorm]
-save_every: 500
+save_every: 250
 
 tags:
   - assault_v0
   - dqn
   - BN
-  - Huber
-  - avg_Q_value
+  - reward_change

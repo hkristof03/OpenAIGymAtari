@@ -72,6 +72,7 @@ def train(conf: dict) -> dict:
     average_action_values = []
 
     agent = DQNAgent(**exp_conf)
+    agent_hps = np.inf
 
     for i_episode in range(1, n_episodes + 1):
 
@@ -84,6 +85,17 @@ def train(conf: dict) -> dict:
             # env.render()
             action = agent.act(state, eps)
             next_state, reward, done, info = env.step(action)
+
+            if reward == 0.0 and not done:
+                reward += -0.01
+
+            if agent_hps == np.inf:
+                agent_hps = info['ale.lives']
+
+            elif info['ale.lives'] < agent_hps:
+                reward += -50.0
+                agent_hps += -1
+
             score += reward
             next_state = stack_frames(state, next_state, crop_params, False)
             agent.step(state, action, reward, next_state, done)
